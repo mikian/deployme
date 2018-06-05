@@ -61,13 +61,13 @@ module Deployme
 
     def providers
       @providers ||= config[:providers].map do |type, options|
-        Providers.const_get(Util.camelize(type)).new(deployment: self, config: options)
+        Providers.const_get(Util.camelize(type)).new(deployment: self, config: options || {})
       end
     end
 
     def notifications
       @notifications ||= config[:notifications].map do |type, options|
-        Notifications.const_get(Util.camelize(type)).new(deployment: self, config: options)
+        Notifications.const_get(Util.camelize(type)).new(deployment: self, config: options || {})
       end
     end
   end

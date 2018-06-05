@@ -4,6 +4,10 @@ module Deployme
   class Options
     def initialize(hash)
       @data = OpenStruct.new(hash)
+
+      # Set defaults
+      @data.name ||= File.basename(File.expand_path('.'))
+      @data.directory ||= File.expand_path('.deploy')
     end
 
     def git_commit
@@ -27,11 +31,7 @@ module Deployme
     end
 
     def method_missing(meth, *args, &blk)
-      if @data.respond_to?(meth)
-        @data.send(meth, *args, &blk)
-      else
-        super
-      end
+      @data.send(meth, *args, &blk)
     end
 
     def respond_to_missing?(method_name, include_private = false)

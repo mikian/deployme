@@ -12,7 +12,7 @@ module Deployme
 
       raise "Cannot find environment #{file}" unless File.exist?(file)
 
-      YAML.load(ERB.new(File.read(file)).result(Context.with(options)), symbolize_names: true)
+      Util.deep_symbolize_keys(YAML.load(ERB.new(File.read(file)).result(Context.with(options))))
     end
 
     private

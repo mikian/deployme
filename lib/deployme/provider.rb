@@ -1,16 +1,21 @@
 require 'forwardable'
+require 'deployme/settings'
 
 module Deployme
   class Provider
     extend Forwardable
 
+    def self.defaults
+      {}
+    end
+
     def self.all
-      Providers .constants.map{|c| Providers  .const_get(c) }
+      Providers.constants.map { |c| Providers.const_get(c) }
     end
 
     def initialize(deployment:, config:)
       @deployment = deployment
-      @config = config
+      @settings = Settings.new(self.class, config, deployment.options)
     end
 
     def deploy
@@ -30,7 +35,7 @@ module Deployme
 
     private
 
-    attr_reader :deployment, :config
+    attr_reader :deployment, :settings
     delegate logger: :deployment
   end
 end

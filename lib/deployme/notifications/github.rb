@@ -28,14 +28,14 @@ module Deployme
       end
 
       def notify_error(error = nil)
+        return unless @github_deployment
+
         logger.error 'Reporting Error to GitHub'
         response = request(
           :post,
           "https://api.github.com/repos/appearhere/web/deployments/#{@github_deployment['id']}/statuses",
-          {
-            state: 'error',
-            description: error.to_s[0...140]
-          }
+          state: 'error',
+          description: error.to_s[0...140]
         )
         return if response['id']
         logger.error response['message']
@@ -46,25 +46,19 @@ module Deployme
         request(
           :post,
           "https://api.github.com/repos/appearhere/web/deployments/#{@github_deployment['id']}/statuses",
-          {
-            state: 'success',
-            environment_url: deployment.options.deploy_url,
-            description: 'Review app created successfully.'
-          }
+          state: 'success',
+          environment_url: deployment.options.deploy_url,
+          description: 'Review app created successfully.'
         )
       end
 
       private
 
-      def github_token
-        @github_token ||= ENV.fetch('GITHUB_TOKEN') { config[:github_token] || deployment.options.github_token }
-      end
-
       def header
         {
           'Accept' => 'application/vnd.github.ant-man-preview+json',
           'Content-Type' => 'text/json',
-          'Authorization' => "token #{github_token}"
+          'Authorization' => "token #{settings.token}"
         }
       end
 

@@ -4,8 +4,8 @@ module Deployme
   module Providers
     class Ecs < Provider
       def self.options(parser)
-        parser.on('-i', '--image=IMAGE_TAG', String, 'Image tag to use for deployment') { |options, value| options.image = value }
-        parser.on('-c', '--cluster=NAME', String, 'ECS Cluster name to deploy to')   { |options, value| options.cluster = value }
+        parser.on('--ecs-image=IMAGE_TAG', String, 'Image tag to use for deployment') { |options, value| options.ecs_image = value }
+        parser.on('--ecs-cluster=NAME', String, 'ECS Cluster name to deploy to')   { |options, value| options.ecs_cluster = value }
       end
 
       def execute
@@ -20,7 +20,7 @@ module Deployme
           logger.info "Registering task: #{family}"
           definition = Util.deep_dup(task_definition)
           definition[:family] = family
-          definition[:container_definitions].each { |container| container[:image] ||= deployment.options.image }
+          definition[:container_definitions].each { |container| container[:image] ||= settings.ecs_image }
           response = client.register_task_definition(definition)
           definition[:arn] = response.task_definition.task_definition_arn
           logger.info "New task definition: #{definition[:arn]}"
@@ -34,7 +34,7 @@ module Deployme
           task_definition = task_definitions[service[:task_family].to_sym]
 
           response = client.upsert_service(
-            cluster: deployment.options.cluster,
+            cluster: settings.ecs_cluster,
             service: service[:name],
             desired_count: service[:desired_count],
             task_definition: task_definition[:arn],

@@ -12,5 +12,20 @@ module Deployme
     def self.deep_dup(obj)
       Marshal.load(Marshal.dump(obj))
     end
+
+    def self.deep_symbolize_keys(hash)
+      case hash
+      when Hash
+        Hash[
+          hash.map do |k, v|
+            [k.respond_to?(:to_sym) ? k.to_sym : k, deep_symbolize_keys(v)]
+          end
+        ]
+      when Enumerable
+        hash.map { |v| deep_symbolize_keys(v) }
+      else
+        hash
+      end
+    end
   end
 end
