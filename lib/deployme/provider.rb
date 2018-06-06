@@ -15,7 +15,7 @@ module Deployme
 
     def initialize(deployment:, config:)
       @deployment = deployment
-      @settings = Settings.new(self.class, config, deployment.options)
+      @config = config
     end
 
     def deploy
@@ -35,8 +35,8 @@ module Deployme
 
     private
 
-    attr_reader :deployment, :settings
-    delegate logger: :deployment
+    attr_reader :deployment, :config
+    delegate %i[logger options] => :deployment
   end
 end
 

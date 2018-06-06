@@ -20,7 +20,7 @@ module Deployme
           logger.info "Registering task: #{family}"
           definition = Util.deep_dup(task_definition)
           definition[:family] = family
-          definition[:container_definitions].each { |container| container[:image] ||= settings.ecs_image }
+          definition[:container_definitions].each { |container| container[:image] ||= options.ecs_image }
           response = client.register_task_definition(definition)
           definition[:arn] = response.task_definition.task_definition_arn
           logger.info "New task definition: #{definition[:arn]}"
@@ -34,7 +34,7 @@ module Deployme
           task_definition = task_definitions[service[:task_family].to_sym]
 
           response = client.upsert_service(
-            cluster: settings.ecs_cluster,
+            cluster: options.ecs_cluster,
             service: service[:name],
             desired_count: service[:desired_count],
             task_definition: task_definition[:arn],
