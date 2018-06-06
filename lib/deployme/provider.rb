@@ -26,7 +26,7 @@ module Deployme
       deployment.notify(:finish)
     rescue StandardError => e
       deployment.notify(:error, e)
-      throw e
+      raise
     end
 
     def execute
