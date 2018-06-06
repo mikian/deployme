@@ -16,7 +16,6 @@ module Deployme
 
       def notify_start
         logger.info 'Adding Website link to JIRA'
-        require 'pry'; binding.pry
         settings.issues.each do |issue_key|
           logger.info issue_key
         end
