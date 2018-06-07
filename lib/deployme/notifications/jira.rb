@@ -3,10 +3,6 @@ require 'jira-ruby'
 module Deployme
   module Notifications
     class Jira < Notification
-      def self.defaults
-        { issues: [] }
-      end
-
       def self.options(parser)
         parser.on('--jira-issues=TICKET,TICKET', Array, 'JIRA Tickets to Update') { |options, value| options.jira_issues = value }
         parser.on('--jira-url=URL', String, 'JIRA Instance URL') { |options, value| options.jira_url = value }
@@ -20,6 +16,8 @@ module Deployme
       def notify_error(error = nil); end
 
       def notify_finish
+        return unless settings.issues
+
         logger.info 'Adding Website link to JIRA'
         settings.issues.each do |issue_key|
           logger.info "Finding Issue: #{issue_key}"
