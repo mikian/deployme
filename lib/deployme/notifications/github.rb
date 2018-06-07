@@ -10,6 +10,7 @@ module Deployme
 
       def notify_start
         logger.info 'Create GitHub Deployment...'
+        return if options.dry_run
         @github_deployment = request(
           :post,
           'https://api.github.com/repos/appearhere/web/deployments',
@@ -42,6 +43,8 @@ module Deployme
       end
 
       def notify_finish
+        return unless @github_deployment
+
         logger.info 'Successful GitHub Deployment...'
         request(
           :post,

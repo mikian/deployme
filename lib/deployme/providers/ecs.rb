@@ -9,6 +9,7 @@ module Deployme
       end
 
       def execute
+        return if options.dry_run
         register_tasks
         register_services
       end

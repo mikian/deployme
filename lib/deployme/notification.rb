@@ -21,7 +21,7 @@ module Deployme
     private
 
     attr_reader :deployment, :settings
-    delegate logger: :deployment
+    delegate %i[logger options] => :deployment
   end
 end
 

@@ -15,10 +15,6 @@ module Deployme
       end
 
       def notify_start
-        logger.info 'Adding Website link to JIRA'
-        settings.issues.each do |issue_key|
-          logger.info issue_key
-        end
       end
 
       def notify_error(error = nil); end
@@ -27,6 +23,8 @@ module Deployme
         logger.info 'Adding Website link to JIRA'
         settings.issues.each do |issue_key|
           logger.info "Finding Issue: #{issue_key}"
+          next if options.dry_run
+
           issue = client.Issue.find(issue_key)
           next if issue.remotelink.find { |link| link.attrs['object']['url'] == deployment.options.deploy_url }
 

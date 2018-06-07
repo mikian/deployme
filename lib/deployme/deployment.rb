@@ -29,6 +29,7 @@ module Deployme
     end
 
     def run
+      logger.info "Start deployment for #{options.deploy_name}"
       providers.each(&:deploy)
     end
 

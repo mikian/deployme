@@ -24,6 +24,7 @@ module Deployme
           exit
         end
 
+        parser.on('--dry-run', 'Do not actually do anything') { |options| options.dry_run = true }
         parser.on('--debug', 'Increase verbosity') { |options| options.debug = true }
         parser.on_tail('--version', 'Show version') do
           puts ::Deployme::VERSION
