@@ -26,8 +26,12 @@ module Deployme
       "#{@data.name}-pr-#{change_id}"
     end
 
+    def deploy_host
+      @data.deploy_host ||= "#{deploy_name}.#{@data.deploy_domain}"
+    end
+
     def deploy_url
-      @data.deploy_url ||= "https://#{deploy_name}.#{@data.deploy_domain}"
+      @data.deploy_url ||= "https://#{deploy_host}"
     end
 
     def method_missing(meth, *args, &blk)
