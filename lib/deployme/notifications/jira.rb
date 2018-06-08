@@ -24,7 +24,7 @@ module Deployme
           next if options.dry_run
 
           issue = client.Issue.find(issue_key)
-          next if issue.remotelink.find { |link| link.attrs['object']['url'] == deployment.options.deploy_url }
+          next if issue.remotelink.all.any? { |link| link.attrs['object']['url'] == deployment.options.deploy_url }
 
           logger.info "Adding link to #{deployment.options.deploy_url}"
           link = issue.remotelink.build
