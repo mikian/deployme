@@ -5,7 +5,7 @@ module Deployme
     class Ecs < Provider
       def self.options(parser)
         parser.on('--ecs-image=IMAGE_TAG', String, 'Image tag to use for deployment') { |options, value| options.ecs_image = value }
-        parser.on('--ecs-cluster=NAME', String, 'ECS Cluster name to deploy to')   { |options, value| options.ecs_cluster = value }
+        parser.on('--ecs-cluster=NAME', String, 'ECS Cluster name to deploy to') { |options, value| options.ecs_cluster = value }
       end
 
       def execute
@@ -30,7 +30,7 @@ module Deployme
       end
 
       def register_services
-        config[:services].each do |service|
+        services = config[:services].map do |service|
           logger.info "Registering Service #{service[:name]}"
           task_definition = task_definitions[service[:task_family].to_sym]
 
@@ -43,6 +43,18 @@ module Deployme
           )
 
           logger.info "Success: #{response.service.status}"
+          response.service.service_arn
+        end
+
+        begin
+          client.wait_until(:services_stable, cluster: options.ecs_cluster, services: services) do |w|
+            w.before_wait do
+              logger.info 'Waiting for services to stable...'
+            end
+          end
+        rescue Aws::Waiters::Errors::WaiterFailed => error
+          logger.error "failed waiting for service: #{error.message}"
+          exit(1)
         end
       end
 
