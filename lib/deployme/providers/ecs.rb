@@ -11,6 +11,7 @@ module Deployme
       def execute
         return if options.dry_run
         register_tasks
+        run_tasks
         register_services
       end
 
@@ -55,6 +56,62 @@ module Deployme
         rescue Aws::Waiters::Errors::WaiterFailed => error
           logger.error "failed waiting for service: #{error.message}"
           exit(1)
+        end
+      end
+
+      def report_run_task_failures(failures)
+        return if failures.empty?
+        failures.each do |failure|
+          STDERR.puts "Error: run task failure '#{failure.reason}'"
+        end
+        exit 1
+      end
+
+      # handle one off tasks
+      def run_tasks
+        config.fetch(:one_off_commands, []).each do |one_off_command|
+          task_definition = task_definitions[one_off_command[:task_family].to_sym]
+          logger.info "Running '#{one_off_command[:command]}'"
+          response = client.run_task(
+            cluster: options.ecs_cluster,
+            task_definition: task_definition[:arn],
+            count: 1,
+            started_by: "ecs-deploy: one_off_commands",
+            overrides: {
+              container_overrides: [
+                {
+                  name: task_definition[:container_definitions].first[:name],
+                  command: Array(one_off_command[:command])
+                }
+              ]
+            }
+          )
+          # handle potential failures
+          report_run_task_failures(response.failures)
+
+          task_arn = response.tasks.first.task_arn
+          print "Waiting for '#{one_off_command[:command]}' to finish"
+          waiting = 0
+          last_now = Time.now
+          task = nil
+          while waiting <= 1800 do
+            task = client.describe_tasks(tasks: [task_arn], cluster: options.ecs_cluster).tasks.first
+            break if task.last_status == "STOPPED"
+            print "."
+            now = Time.now
+            waiting += (now - last_now).to_i
+            last_now = now
+            sleep 5
+          end
+          if waiting > 1800
+            STDERR.puts "Error: wait time exceeded"
+            exit 1
+          end
+          if task.containers.first.exit_code != 0
+            STDERR.puts "Error: '#{one_off_command[:command]}' finished with a non-zero exit code! Aborting."
+            exit 1
+          end
+          puts " done!"
         end
       end
 
