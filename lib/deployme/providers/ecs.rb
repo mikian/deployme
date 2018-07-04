@@ -40,7 +40,8 @@ module Deployme
             service: service[:name],
             desired_count: service[:desired_count],
             task_definition: task_definition[:arn],
-            deployment_configuration: service[:deployment_configuration]
+            deployment_configuration: service[:deployment_configuration],
+            load_balancers: service[:load_balancers]
           )
 
           logger.info "Success: #{response.service.status}"
@@ -70,6 +71,7 @@ module Deployme
       # handle one off tasks
       def run_tasks
         config.fetch(:one_off_commands, []).each do |one_off_command|
+          require 'pry'; binding.pry
           task_definition = task_definitions[one_off_command[:task_family].to_sym]
           logger.info "Running '#{one_off_command[:command]}'"
 

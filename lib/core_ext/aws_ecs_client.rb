@@ -6,7 +6,8 @@ class Aws::ECS::Client # rubocop:disable Style/ClassAndModuleChildren
       cluster: options[:cluster], services: [options[:service]]
     ).services.any? { |svc| svc.status == 'ACTIVE' }
     if active_services
-      send(:update_service, options)
+
+      send(:update_service, options.tap { |o| o.delete(:load_balancers) })
     else
       options[:service_name] = options.delete(:service)
       send(:create_service, options)

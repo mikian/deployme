@@ -23,7 +23,11 @@ module Deployme
     end
 
     def deploy_name
-      "#{@data.name}-pr-#{change_id}"
+      @deploy_name ||= if change_id
+                         "#{@data.name}-pr-#{change_id}"
+                       else
+                         @data.name
+      end
     end
 
     def deploy_host
