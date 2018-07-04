@@ -55,7 +55,7 @@ module Deployme
           end
         rescue Aws::Waiters::Errors::WaiterFailed => error
           logger.error "failed waiting for service: #{error.message}"
-          exit(1)
+          raise('Failed to deploy')
         end
       end
 
@@ -64,7 +64,7 @@ module Deployme
         failures.each do |failure|
           STDERR.puts "Error: run task failure '#{failure.reason}'"
         end
-        exit 1
+        raise('Failed to deploy')
       end
 
       # handle one off tasks
@@ -72,11 +72,12 @@ module Deployme
         config.fetch(:one_off_commands, []).each do |one_off_command|
           task_definition = task_definitions[one_off_command[:task_family].to_sym]
           logger.info "Running '#{one_off_command[:command]}'"
+
           response = client.run_task(
             cluster: options.ecs_cluster,
             task_definition: task_definition[:arn],
             count: 1,
-            started_by: "ecs-deploy: one_off_commands",
+            started_by: 'ecs-deploy: one_off_commands',
             overrides: {
               container_overrides: [
                 {
@@ -90,28 +91,27 @@ module Deployme
           report_run_task_failures(response.failures)
 
           task_arn = response.tasks.first.task_arn
-          print "Waiting for '#{one_off_command[:command]}' to finish"
-          waiting = 0
-          last_now = Time.now
-          task = nil
-          while waiting <= 1800 do
-            task = client.describe_tasks(tasks: [task_arn], cluster: options.ecs_cluster).tasks.first
-            break if task.last_status == "STOPPED"
-            print "."
-            now = Time.now
-            waiting += (now - last_now).to_i
-            last_now = now
-            sleep 5
+          logger.info "Task: #{task_arn}"
+          begin
+            client.wait_until(:tasks_stopped, cluster: options.ecs_cluster, tasks: [task_arn]) do |w|
+              w.before_wait do
+                logger.info 'Waiting for task to finish...'
+              end
+            end
+          rescue Aws::Waiters::Errors::WaiterFailed => error
+            logger.error "failed waiting for task: #{error.message}"
+            raise('Failed to deploy')
           end
-          if waiting > 1800
-            STDERR.puts "Error: wait time exceeded"
-            exit 1
-          end
-          if task.containers.first.exit_code != 0
+
+          task = client.describe_tasks(tasks: [task_arn], cluster: options.ecs_cluster).tasks.first
+          container = task.containers.find { |c| c.name == task_definition[:container_definitions].first[:name] }
+          if container.exit_code != 0
             STDERR.puts "Error: '#{one_off_command[:command]}' finished with a non-zero exit code! Aborting."
-            exit 1
+            STDERR.puts "Exit code: #{task.containers.first.exit_code}"
+            STDERR.puts "           #{task.containers.first.reason}"
+            raise('Failed to deploy')
           end
-          puts " done!"
+          puts ' done!'
         end
       end
 
