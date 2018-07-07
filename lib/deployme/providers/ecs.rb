@@ -71,7 +71,6 @@ module Deployme
       # handle one off tasks
       def run_tasks
         config.fetch(:one_off_commands, []).each do |one_off_command|
-          require 'pry'; binding.pry
           task_definition = task_definitions[one_off_command[:task_family].to_sym]
           logger.info "Running '#{one_off_command[:command]}'"
 
