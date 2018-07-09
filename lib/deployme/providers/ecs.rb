@@ -108,8 +108,8 @@ module Deployme
           container = task.containers.find { |c| c.name == task_definition[:container_definitions].first[:name] }
           if container.exit_code != 0
             STDERR.puts "Error: '#{one_off_command[:command]}' finished with a non-zero exit code! Aborting."
-            STDERR.puts "Exit code: #{task.containers.first.exit_code}"
-            STDERR.puts "           #{task.containers.first.reason}"
+            STDERR.puts "Exit code: #{container.exit_code}"
+            STDERR.puts "           #{container.reason}"
             raise('Failed to deploy')
           end
           puts ' done!'
